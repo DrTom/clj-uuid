@@ -1,3 +1,6 @@
+
+This is a fork from https://github.com/danlentz/clj-uuid.
+
 # clj-uuid
 
 A Clojure library for generation and utilization of UUIDs (Universally
@@ -70,7 +73,7 @@ Distributed under the Eclipse Public License either version 1.0
 With Leiningen:
 
 ```clj
-[danlentz/clj-uuid "0.0.6-SNAPSHOT"]
+[drtom/clj-uuid "0.0.7"]
 ```
 
 With Maven:
