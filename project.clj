@@ -1,4 +1,4 @@
-(defproject drtom/clj-uuid "0.0.7"
+(defproject drtom/clj-uuid "0.0.8"
   :description  "A Clojure library for generation and utilization of
                 UUIDs (Universally Unique Identifiers) as described by
                 RFC-4122. This library extends the standard Java UUID class

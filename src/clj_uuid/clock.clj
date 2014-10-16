@@ -13,7 +13,6 @@
         (java.net.NetworkInterface/getByInetAddress 
           (java.net.InetAddress/getLocalHost))))))
 
-(def +node-id+          (make-node-id))
 (def +tick-resolution+  9999)
 (def +startup-nanotime+ (System/nanoTime))
 

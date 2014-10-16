@@ -5,7 +5,7 @@
 
 
 (deftest check-node-id
-  (is (= (make-node-id) (make-node-id) +node-id+)))
+  (is (= (make-node-id) (make-node-id) (make-node-id) )))
 
 (deftest check-nanosec-monotonic
   (is (apply <= (repeat 100000 (get-internal-real-time)))))
