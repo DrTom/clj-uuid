@@ -34,11 +34,11 @@
 ;;  node       |    6 |  ub48   |  (<BYTE> <BYTE> <BYTE> <BYTE> <BYTE> <BYTE>)
 ;;
 ;; prepending two other (computed) bytes to the node-id before
-;; bitwise assembly.  
-;; 
+;; bitwise assembly.
+;;
 ;;  (cons clock-high (cons clock-low +node-id+))
 ;;
-;;  
+;;
 ;;      ( <BYTE> . <BYTE> . <BYTE> <BYTE> <BYTE> <BYTE> <BYTE> <BYTE>)
 ;;
 
@@ -50,18 +50,18 @@
 ;; approaches.  The most straightforward is the use of IEEE 802 MAC Address:
 ;;
 ;;     (.getHardwareAddress
-;;       (java.net.NetworkInterface/getByInetAddress 
+;;       (java.net.NetworkInterface/getByInetAddress
 ;;         (java.net.InetAddress/getLocalHost))))))
 ;;
 ;; Unfortunately got reports of NPE on some platforms (openjdk?).  Also, it
-;; discloses the hardware address of the host system -- this is how the 
+;; discloses the hardware address of the host system -- this is how the
 ;; creator of the melissa virus was actually tracked down and caught.
 ;;
 ;; choosing node-id randomly does not provide consistent generation of UUID's
 ;; across runtimes.
 ;;
 ;; This topic is specifically addressed by the RFC:
-;; 
+;;
 ;;
 ;;   "A better solution is to obtain a 47-bit cryptographic quality random
 ;;   number and use it as the low 47-bits of the Node-ID, with the least
@@ -87,16 +87,16 @@
 ;; We do exactly that.  Taking into account that the term "first octet"
 ;; in the above excerpt refers to network transmission order, and we
 ;; 'bit-or' the corresponding bytes:
-;;                                                      
+;;
 ;;     hi-byte | byte5 | byte4 | byte3 | byte2 | lo-byte
 ;;    ---------+-------+-------+-------+-------+---------
-;;       0x00  |  0x00 |  0x00 |  0x00 |  0x00 |   0x01      
-;;                                                      
+;;       0x00  |  0x00 |  0x00 |  0x00 |  0x00 |   0x01
+;;
 ;; Thanks to Datastax and to @jjcomer for submitting the original patch
 ;; from which this current implementation is largely derived.
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
- 
+
 
 (def ^:private datasources ["java.vendor"
                             "java.vendor.url"
@@ -115,11 +115,11 @@
                                                   (.getInetAddresses ni)))))
                              base-addresses
                              (enumeration-seq
-                               (NetworkInterface/getNetworkInterfaces)))]    
+                               (NetworkInterface/getNetworkInterfaces)))]
     (reduce conj network-interfaces
       (map str (InetAddress/getAllByName host-name)))))
 
-(defn- make-node-id []
+(defn make-node-id []
     (let [addresses (all-local-addresses)
           ^MessageDigest digest (MessageDigest/getInstance "MD5")
           ^Properties    props  (System/getProperties)
@@ -136,17 +136,17 @@
         (take 6 (seq (.digest digest))))))
 
 
+(defn +node-id+ []
+  (assemble-bytes (cons 0 (cons 0 (make-node-id)))))
+
+(defn _+v1-lsb+_ []
+  (let [clk-high  (dpb (mask 2 6) (ldb (mask 6 8) +clock-sequence+) 0x2)
+        clk-low   (ldb (mask 8 0) +clock-sequence+)]
+    (dpb (mask 8 56) (dpb (mask 8 48) (+node-id+) clk-low) clk-high)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Public NodeID API
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def node-id
-  (memoize make-node-id))
-
-(def ^:const +node-id+
-  (assemble-bytes (cons 0 (cons 0 (node-id)))))
-
-(def ^:const +v1-lsb+
-  (let [clk-high  (dpb (mask 2 6) (ldb (mask 6 8) +clock-sequence+) 0x2)
-        clk-low   (ldb (mask 8 0) +clock-sequence+)]
-    (dpb (mask 8 56) (dpb (mask 8 48) +node-id+ clk-low) clk-high)))
+(def +v1-lsb+
+  (memoize _+v1-lsb+_))
